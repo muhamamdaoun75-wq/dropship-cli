@@ -6,7 +6,7 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 ## Build Order (follow exactly)
 
 ### Phase 1: Core Infrastructure
-1. `bin/dropship.js` — CLI entry point with Commander (21 commands)
+1. `bin/dropship.js` — CLI entry point with Commander (22 commands)
 2. `lib/config.js` — Store credentials, API keys, persistent config via `conf`
 3. `lib/ai.js` — Claude AI client with tool use, rate limiting, retry (the brain)
 4. `lib/shopify.js` — Shopify API client with retry logic
@@ -14,6 +14,7 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 6. `lib/logger.js` — Styled terminal output with chalk + ora
 7. `lib/cj.js` — CJ Dropshipping API client (token management, product search, order placement, tracking)
 8. `lib/suppliers.js` — Multi-supplier router with scoring (cost/speed/reliability)
+9. `lib/license.js` — License key validation, tier gating (free/pro), usage tracking
 
 ### Phase 2: Skills (18 AI Agent Commands)
 9. `skills/chat.js` — Interactive conversational mode (talk to AI about your business)
@@ -81,4 +82,11 @@ dropship doctor            — System health check + error diagnosis
 dropship autopilot         — Run everything autonomously
 dropship status            — Quick business overview
 dropship config            — View/edit configuration
+dropship activate [key]    — Activate a Pro license key
 ```
+
+## Monetization
+- Free tier: connect, status, chat, scout, source, doctor, config (with usage limits)
+- Pro tier: all commands, unlimited usage ($29/mo license key)
+- CJ affiliate tracking: orders placed through CLI embed referral ID
+- License keys: HMAC-signed, offline-validated, no server needed

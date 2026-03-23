@@ -162,6 +162,60 @@ await test('lib/config.js has CJ email/password methods', async () => {
   assert(typeof config.clearCJToken === 'function', 'Missing clearCJToken()')
 })
 
+await test('lib/config.js has license + usage methods', async () => {
+  const { default: config } = await import('../lib/config.js')
+  assert(typeof config.getLicenseKey === 'function', 'Missing getLicenseKey()')
+  assert(typeof config.setLicenseKey === 'function', 'Missing setLicenseKey()')
+  assert(typeof config.removeLicenseKey === 'function', 'Missing removeLicenseKey()')
+  assert(typeof config.getUsage === 'function', 'Missing getUsage()')
+  assert(typeof config.incrementUsage === 'function', 'Missing incrementUsage()')
+})
+
+await test('lib/license.js loads with all exports', async () => {
+  const mod = await import('../lib/license.js')
+  const required = ['generateKey', 'validateKey', 'getTier', 'isCommandAllowed', 'getUsage', 'incrementUsage', 'checkLimit', 'FREE_COMMANDS', 'PRO_COMMANDS', 'TIERS']
+  for (const fn of required) {
+    assert(mod[fn] !== undefined, `Missing ${fn}`)
+  }
+})
+
+await test('lib/license.js key generation and validation roundtrip', async () => {
+  const { generateKey, validateKey } = await import('../lib/license.js')
+  const key = generateKey('test@example.com', 'pro', 30)
+  assert(key.startsWith('DSC-'), 'Key should start with DSC-')
+  const result = validateKey(key)
+  assert(result.valid === true, `Key should be valid, got: ${result.reason}`)
+  assert(result.tier === 'pro', `Tier should be pro, got: ${result.tier}`)
+  assert(result.email === 'test@example.com', `Email mismatch: ${result.email}`)
+})
+
+await test('lib/license.js rejects tampered keys', async () => {
+  const { generateKey, validateKey } = await import('../lib/license.js')
+  const key = generateKey('test@example.com', 'pro', 30)
+  // Tamper with the key
+  const tampered = key.slice(0, -2) + 'XX'
+  const result = validateKey(tampered)
+  assert(result.valid === false, 'Tampered key should be invalid')
+})
+
+await test('lib/license.js rejects expired keys', async () => {
+  const { generateKey, validateKey } = await import('../lib/license.js')
+  const key = generateKey('test@example.com', 'pro', -1) // expired yesterday
+  const result = validateKey(key)
+  assert(result.valid === false, 'Expired key should be invalid')
+  assert(result.reason === 'License expired', `Wrong reason: ${result.reason}`)
+})
+
+await test('lib/license.js free tier allows free commands', async () => {
+  const { FREE_COMMANDS, PRO_COMMANDS } = await import('../lib/license.js')
+  assert(FREE_COMMANDS.includes('connect'), 'connect should be free')
+  assert(FREE_COMMANDS.includes('chat'), 'chat should be free')
+  assert(FREE_COMMANDS.includes('scout'), 'scout should be free')
+  assert(PRO_COMMANDS.includes('autopilot'), 'autopilot should be pro')
+  assert(PRO_COMMANDS.includes('fulfill'), 'fulfill should be pro')
+  assert(PRO_COMMANDS.includes('analyze'), 'analyze should be pro')
+})
+
 await test('lib/config.js has product mapping methods', async () => {
   const { default: config } = await import('../lib/config.js')
   assert(typeof config.getProductMappings === 'function', 'Missing getProductMappings()')
@@ -215,7 +269,7 @@ console.log('')
 console.log(chalk.bold('  Phase 3: CLI'))
 console.log('')
 
-await test('bin/dropship.js is valid JS with all 21 commands', async () => {
+await test('bin/dropship.js is valid JS with all 22 commands', async () => {
   const fs = await import('fs')
   const code = fs.readFileSync(new URL('../bin/dropship.js', import.meta.url), 'utf8')
   assert(code.includes('commander'), 'Missing commander import')
@@ -224,7 +278,7 @@ await test('bin/dropship.js is valid JS with all 21 commands', async () => {
   const commands = [
     'connect', 'chat', 'scout', 'source', 'price', 'fulfill', 'guard', 'analyze',
     'segment', 'growth', 'support', 'audit', 'intel', 'supplier',
-    'forecast', 'profit', 'email', 'doctor', 'autopilot', 'config', 'status'
+    'forecast', 'profit', 'email', 'doctor', 'autopilot', 'config', 'status', 'activate'
   ]
   for (const cmd of commands) {
     assert(code.includes(cmd), `Missing ${cmd} command`)
@@ -293,6 +347,7 @@ await test('No circular imports in core libs', async () => {
   await import('../lib/shopify.js')
   await import('../lib/cj.js')
   await import('../lib/suppliers.js')
+  await import('../lib/license.js')
 })
 
 await test('No circular imports in skills', async () => {
@@ -364,7 +419,7 @@ await test('File structure is complete', async () => {
 
   const requiredFiles = [
     'bin/dropship.js',
-    'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js',
+    'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js', 'lib/license.js',
     'skills/scout.js', 'skills/source.js', 'skills/chat.js', 'skills/price.js', 'skills/fulfill.js', 'skills/guard.js',
     'skills/analyze.js', 'skills/segment.js', 'skills/growth.js', 'skills/support.js',
     'skills/audit.js', 'skills/intel.js', 'skills/supplier.js', 'skills/forecast.js',

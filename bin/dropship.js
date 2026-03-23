@@ -5,6 +5,7 @@ import { Command } from 'commander'
 import inquirer from 'inquirer'
 import logger from '../lib/logger.js'
 import config from '../lib/config.js'
+import { isCommandAllowed, getTier, checkLimit, incrementUsage, PRO_COMMANDS } from '../lib/license.js'
 
 // Global error handler — no silent crashes
 process.on('unhandledRejection', (err) => {
@@ -195,6 +196,7 @@ program
   .option('--conservative', 'Use conservative pricing strategy')
   .action(async (opts) => {
     logger.banner()
+    requirePro('price')
     await ensureConnected()
 
     const { default: price } = await import('../skills/price.js')
@@ -208,6 +210,7 @@ program
   .option('--dry-run', 'Preview without fulfilling')
   .action(async (opts) => {
     logger.banner()
+    requirePro('fulfill')
     await ensureConnected()
 
     const { default: fulfill } = await import('../skills/fulfill.js')
@@ -220,6 +223,7 @@ program
   .description('Revenue protection scan')
   .action(async () => {
     logger.banner()
+    requirePro('guard')
     await ensureConnected()
 
     const { default: guard } = await import('../skills/guard.js')
@@ -233,6 +237,7 @@ program
   .option('--period <period>', 'Analysis period (7d, 30d, 90d)', '30d')
   .action(async (opts) => {
     logger.banner()
+    requirePro('analyze')
     await ensureConnected()
 
     const { default: analyze } = await import('../skills/analyze.js')
@@ -245,6 +250,7 @@ program
   .description('Customer segmentation')
   .action(async () => {
     logger.banner()
+    requirePro('segment')
     await ensureConnected()
 
     const { default: segment } = await import('../skills/segment.js')
@@ -258,6 +264,7 @@ program
   .option('--budget <amount>', 'Daily budget cap')
   .action(async (opts) => {
     logger.banner()
+    requirePro('growth')
     await ensureConnected()
 
     const { default: growth } = await import('../skills/growth.js')
@@ -270,6 +277,7 @@ program
   .description('Handle customer tickets')
   .action(async () => {
     logger.banner()
+    requirePro('support')
     await ensureConnected()
 
     const { default: support } = await import('../skills/support.js')
@@ -282,6 +290,7 @@ program
   .description('Full business audit')
   .action(async () => {
     logger.banner()
+    requirePro('audit')
     await ensureConnected()
 
     const { default: audit } = await import('../skills/audit.js')
@@ -294,6 +303,7 @@ program
   .description('Competitive intelligence report')
   .action(async () => {
     logger.banner()
+    requirePro('intel')
     await ensureConnected()
 
     const { default: intel } = await import('../skills/intel.js')
@@ -306,6 +316,7 @@ program
   .description('Supplier analysis and management')
   .action(async () => {
     logger.banner()
+    requirePro('supplier')
     await ensureConnected()
 
     const { default: supplier } = await import('../skills/supplier.js')
@@ -318,6 +329,7 @@ program
   .description('Revenue and inventory forecasting')
   .action(async () => {
     logger.banner()
+    requirePro('forecast')
     await ensureConnected()
 
     const { default: forecast } = await import('../skills/forecast.js')
@@ -330,6 +342,7 @@ program
   .description('Real P&L profit analysis')
   .action(async () => {
     logger.banner()
+    requirePro('profit')
     await ensureConnected()
 
     const { default: profit } = await import('../skills/profit.js')
@@ -342,6 +355,7 @@ program
   .description('Email marketing and retention')
   .action(async () => {
     logger.banner()
+    requirePro('email')
     await ensureConnected()
 
     const { default: email } = await import('../skills/email.js')
@@ -367,6 +381,7 @@ program
   .option('--once', 'Run one cycle then exit')
   .action(async (opts) => {
     logger.banner()
+    requirePro('autopilot')
     await ensureConnected()
 
     const { default: autopilot } = await import('../skills/autopilot.js')
@@ -402,9 +417,69 @@ program
         logger.kv('  CJ Token', hoursLeft > 0 ? `Valid (${hoursLeft}h remaining)` : 'Expired (will auto-refresh)')
       }
     }
+
+    // License info
+    logger.blank()
+    const tier = getTier()
+    logger.kv('License', tier.tier === 'pro' ? `Pro (${tier.email})` : 'Free')
+    if (tier.expiresAt) logger.kv('  Expires', tier.expiresAt.toLocaleDateString())
+    if (tier.tier === 'free') {
+      logger.dim('  Upgrade: dropship activate DSC-YOUR-KEY')
+    }
   })
 
-// ─── Helper ─────────────────────────────────────────
+// ─── activate ─────────────────────────────────────────
+program
+  .command('activate')
+  .description('Activate a Pro license key')
+  .argument('[key]', 'License key (DSC-...)')
+  .option('--remove', 'Remove current license')
+  .option('--status', 'Show license status')
+  .action(async (key, opts) => {
+    logger.banner()
+    logger.header('License')
+
+    if (opts.remove) {
+      config.removeLicenseKey()
+      logger.success('License removed. You are on the Free tier.')
+      return
+    }
+
+    if (opts.status || !key) {
+      const tier = getTier()
+      logger.kv('Tier', tier.tier === 'pro' ? 'Pro' : 'Free')
+      if (tier.email) logger.kv('Email', tier.email)
+      if (tier.expiresAt) logger.kv('Expires', tier.expiresAt.toLocaleDateString())
+      if (tier.reason) logger.kv('Note', tier.reason)
+
+      if (tier.tier === 'free') {
+        logger.blank()
+        logger.info('Free tier limits:')
+        logger.dim('  3 product sources/month')
+        logger.dim('  5 scout results')
+        logger.dim('  10 fulfillments/month')
+        logger.dim('  No autopilot')
+        logger.blank()
+        logger.info('Upgrade: dropship activate DSC-YOUR-KEY')
+      }
+      return
+    }
+
+    // Activate key
+    const { validateKey } = await import('../lib/license.js')
+    const result = validateKey(key)
+
+    if (result.valid) {
+      config.setLicenseKey(key)
+      logger.success(`Pro license activated!`)
+      logger.kv('Email', result.email)
+      logger.kv('Expires', result.expiresAt.toLocaleDateString())
+    } else {
+      logger.error(`Invalid key: ${result.reason}`)
+    }
+  })
+
+// ─── Helpers ─────────────────────────────────────────
 async function ensureConnected() {
   if (!config.isConnected()) {
     logger.error('Not connected. Run: dropship connect')
@@ -412,6 +487,17 @@ async function ensureConnected() {
   }
   if (!config.getAnthropicKey()) {
     logger.error('AI not configured. Run: dropship connect')
+    process.exit(1)
+  }
+}
+
+function requirePro(command) {
+  if (!isCommandAllowed(command)) {
+    const tier = getTier()
+    logger.error(`"${command}" requires Pro. You're on the ${tier.name} tier.`)
+    logger.blank()
+    logger.info('Upgrade: dropship activate DSC-YOUR-KEY')
+    logger.dim('Get a key at https://dropship-cli.dev/pro')
     process.exit(1)
   }
 }

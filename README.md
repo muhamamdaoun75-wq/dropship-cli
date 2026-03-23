@@ -66,6 +66,7 @@ dropship autopilot
 | `dropship doctor` | System health check |
 | `dropship autopilot` | Run everything autonomously |
 | `dropship config` | View/edit configuration |
+| `dropship activate` | Activate a Pro license key |
 
 ## How It Works
 
@@ -91,6 +92,23 @@ Reports results to your terminal
 ```
 
 `dropship autopilot` orchestrates all agents — it checks business state, decides what needs attention, and runs the right agents in the right order. Every 15 minutes.
+
+## Free vs Pro
+
+Dropship CLI works out of the box on the **Free tier**. Pro unlocks everything.
+
+| | Free | Pro |
+|---|---|---|
+| Connect + Status | Yes | Yes |
+| Chat with AI | Yes (20/day) | Unlimited |
+| Scout products | 5 results | Unlimited |
+| Source products | 3/month | Unlimited |
+| Fulfillment | - | Yes |
+| Revenue guard | - | Yes |
+| Analytics + audit | - | Yes |
+| Autopilot | - | Yes |
+
+Activate Pro: `dropship activate DSC-YOUR-KEY`
 
 ## Requirements
 
@@ -124,7 +142,7 @@ cp .env.example .env
 npm test
 ```
 
-Runs 48 self-tests covering all libs, skills, CLI commands, and integration checks.
+Runs 53 self-tests covering all libs, skills, CLI commands, license system, and integration checks.
 
 ## License
 
