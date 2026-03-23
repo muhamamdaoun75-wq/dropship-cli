@@ -18,6 +18,9 @@ process.on('uncaughtException', (err) => {
   if (process.env.DEBUG) console.error(err)
   process.exit(1)
 })
+// Graceful shutdown
+process.on('SIGINT', () => { logger.blank(); logger.dim('Interrupted.'); process.exit(0) })
+process.on('SIGTERM', () => { logger.blank(); logger.dim('Terminated.'); process.exit(0) })
 
 const program = new Command()
 
@@ -35,7 +38,7 @@ program
     $ dropship status           See your store overview
     $ dropship autopilot        Let AI run everything
 
-  Full docs: https://github.com/phantom-store/dropship-cli
+  Full docs: https://github.com/muhamamdaoun75-wq/dropship-cli
   `)
 
 // ─── connect ────────────────────────────────────────
@@ -51,7 +54,7 @@ program
         type: 'input',
         name: 'shop',
         message: 'Shopify store domain (e.g. mystore.myshopify.com):',
-        validate: v => v.includes('.myshopify.com') || 'Must be a .myshopify.com domain'
+        validate: v => /^[a-z0-9-]+\.myshopify\.com$/i.test(v.trim()) || 'Must be like yourstore.myshopify.com'
       },
       {
         type: 'password',

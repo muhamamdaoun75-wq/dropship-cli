@@ -201,11 +201,29 @@ await test('lib/license.js rejects tampered keys', async () => {
 })
 
 await test('lib/license.js rejects expired keys', async () => {
-  const { generateKey, validateKey } = await import('../lib/license.js')
-  const key = generateKey('test@example.com', 'pro', -1) // expired yesterday
+  const { validateKey } = await import('../lib/license.js')
+  // Manually craft an expired key payload (bypass generateKey validation)
+  const { createHmac } = await import('crypto')
+  const secret = process.env.DROPSHIP_LICENSE_SECRET || 'dsc-phantom-2024-v1'
+  const payload = Buffer.from(JSON.stringify({ email: 'test@example.com', tier: 'pro', exp: Date.now() - 86400000, v: 1 })).toString('base64url')
+  const sig = createHmac('sha256', secret).update(payload).digest('base64url').slice(0, 32)
+  const key = `DSC-${payload}.${sig}`
   const result = validateKey(key)
   assert(result.valid === false, 'Expired key should be invalid')
   assert(result.reason === 'License expired', `Wrong reason: ${result.reason}`)
+})
+
+await test('lib/license.js generateKey validates inputs', async () => {
+  const { generateKey } = await import('../lib/license.js')
+  let threw = false
+  try { generateKey('bad-email', 'pro', 30) } catch { threw = true }
+  assert(threw, 'Should reject invalid email')
+  threw = false
+  try { generateKey('a@b.com', 'ultra', 30) } catch { threw = true }
+  assert(threw, 'Should reject invalid tier')
+  threw = false
+  try { generateKey('a@b.com', 'pro', 9999) } catch { threw = true }
+  assert(threw, 'Should reject invalid expiry')
 })
 
 await test('lib/notify.js loads with all exports', async () => {

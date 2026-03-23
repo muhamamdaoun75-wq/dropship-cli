@@ -94,8 +94,11 @@ const tools = [
         if (input.title) update.title = input.title
         if (input.bodyHtml) update.body_html = input.bodyHtml
         if (input.tags) update.tags = input.tags
-        if (input.metaTitle) update.metafields_global_title_tag = input.metaTitle
-        if (input.metaDescription) update.metafields_global_description_tag = input.metaDescription
+        if (input.metaTitle || input.metaDescription) {
+          update.metafields = []
+          if (input.metaTitle) update.metafields.push({ key: 'title_tag', value: input.metaTitle, type: 'single_line_text_field', namespace: 'global' })
+          if (input.metaDescription) update.metafields.push({ key: 'description_tag', value: input.metaDescription, type: 'single_line_text_field', namespace: 'global' })
+        }
 
         await shopify.updateProduct(input.productId, update)
         logger.success(`Updated: ${input.title || `Product #${input.productId}`}`)
