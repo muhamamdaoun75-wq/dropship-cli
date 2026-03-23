@@ -70,7 +70,7 @@ await test('lib/logger.js pct formatting edge cases', async () => {
 await test('lib/config.js loads with all methods', async () => {
   const mod = await import('../lib/config.js')
   assert(mod.default, 'No default export')
-  const required = ['getShop', 'getShopifyToken', 'getShopifyApiVersion', 'setShopify', 'getSupabaseUrl', 'getSupabaseKey', 'setSupabase', 'getAnthropicKey', 'setAnthropicKey', 'getCJApiKey', 'getCJToken', 'setCJ', 'isConnected', 'isConfigured', 'summary', 'reset']
+  const required = ['getShop', 'getShopifyToken', 'getShopifyApiVersion', 'setShopify', 'getSupabaseUrl', 'getSupabaseKey', 'setSupabase', 'getAnthropicKey', 'setAnthropicKey', 'getCJApiKey', 'getCJToken', 'getCJTokenExpiry', 'setCJ', 'isConnected', 'isConfigured', 'summary', 'reset']
   for (const fn of required) {
     assert(typeof mod.default[fn] === 'function', `Missing ${fn}()`)
   }
@@ -177,6 +177,8 @@ await test('lib/license.js loads with all exports', async () => {
   for (const fn of required) {
     assert(mod[fn] !== undefined, `Missing ${fn}`)
   }
+  // sign() should NOT be exported (security)
+  assert(mod.sign === undefined, 'sign() should not be publicly exported')
 })
 
 await test('lib/license.js key generation and validation roundtrip', async () => {
@@ -206,6 +208,37 @@ await test('lib/license.js rejects expired keys', async () => {
   assert(result.reason === 'License expired', `Wrong reason: ${result.reason}`)
 })
 
+await test('lib/notify.js loads with all exports', async () => {
+  const mod = await import('../lib/notify.js')
+  const required = ['sendSlack', 'sendDiscord', 'sendAlert', 'formatAlert']
+  for (const fn of required) {
+    assert(typeof mod[fn] === 'function', `Missing ${fn}()`)
+  }
+})
+
+await test('lib/notify.js formatAlert returns formatted string', async () => {
+  const { formatAlert } = await import('../lib/notify.js')
+  const msg = formatAlert('order', { message: 'New order received' })
+  assert(typeof msg === 'string', 'Should return a string')
+  assert(msg.includes('ORDER'), 'Should contain type')
+  assert(msg.includes('New order'), 'Should contain message')
+})
+
+await test('lib/config.js has webhook methods', async () => {
+  const { default: config } = await import('../lib/config.js')
+  assert(typeof config.getWebhook === 'function', 'Missing getWebhook()')
+  assert(typeof config.setWebhook === 'function', 'Missing setWebhook()')
+  assert(typeof config.removeWebhook === 'function', 'Missing removeWebhook()')
+  assert(typeof config.getWebhooks === 'function', 'Missing getWebhooks()')
+})
+
+await test('lib/license.js checkLimit handles boolean limits correctly', async () => {
+  const { checkLimit } = await import('../lib/license.js')
+  // Without a pro key, autopilot (boolean false) should be disallowed
+  const result = checkLimit('autopilot')
+  assert(result.allowed === false, `autopilot should be disallowed on free tier, got allowed=${result.allowed}`)
+})
+
 await test('lib/license.js free tier allows free commands', async () => {
   const { FREE_COMMANDS, PRO_COMMANDS } = await import('../lib/license.js')
   assert(FREE_COMMANDS.includes('connect'), 'connect should be free')
@@ -228,7 +261,7 @@ console.log('')
 
 // ─── Phase 2: Skills ────────────────────────────────
 
-console.log(chalk.bold('  Phase 2: Skills (16 AI Agents)'))
+console.log(chalk.bold('  Phase 2: Skills (25 AI Agents)'))
 console.log('')
 
 const skills = [
@@ -249,7 +282,14 @@ const skills = [
   { file: 'profit', name: 'Profit', methods: ['run'] },
   { file: 'email', name: 'Email', methods: ['run'] },
   { file: 'doctor', name: 'Doctor', methods: ['run'] },
-  { file: 'autopilot', name: 'Autopilot', methods: ['run'] }
+  { file: 'autopilot', name: 'Autopilot', methods: ['run'] },
+  { file: 'returns', name: 'Returns', methods: ['run'] },
+  { file: 'inventory', name: 'Inventory', methods: ['run'] },
+  { file: 'copy', name: 'Copy', methods: ['run'] },
+  { file: 'reviews', name: 'Reviews', methods: ['run'] },
+  { file: 'legal', name: 'Legal', methods: ['run'] },
+  { file: 'notify', name: 'Notify', methods: ['run'] },
+  { file: 'upsell', name: 'Upsell', methods: ['run'] }
 ]
 
 for (const skill of skills) {
@@ -269,7 +309,7 @@ console.log('')
 console.log(chalk.bold('  Phase 3: CLI'))
 console.log('')
 
-await test('bin/dropship.js is valid JS with all 22 commands', async () => {
+await test('bin/dropship.js is valid JS with all 29 commands', async () => {
   const fs = await import('fs')
   const code = fs.readFileSync(new URL('../bin/dropship.js', import.meta.url), 'utf8')
   assert(code.includes('commander'), 'Missing commander import')
@@ -278,7 +318,8 @@ await test('bin/dropship.js is valid JS with all 22 commands', async () => {
   const commands = [
     'connect', 'chat', 'scout', 'source', 'price', 'fulfill', 'guard', 'analyze',
     'segment', 'growth', 'support', 'audit', 'intel', 'supplier',
-    'forecast', 'profit', 'email', 'doctor', 'autopilot', 'config', 'status', 'activate'
+    'forecast', 'profit', 'email', 'doctor', 'autopilot', 'config', 'status', 'activate',
+    'returns', 'inventory', 'copy', 'reviews', 'legal', 'notify', 'upsell'
   ]
   for (const cmd of commands) {
     assert(code.includes(cmd), `Missing ${cmd} command`)
@@ -348,6 +389,7 @@ await test('No circular imports in core libs', async () => {
   await import('../lib/cj.js')
   await import('../lib/suppliers.js')
   await import('../lib/license.js')
+  await import('../lib/notify.js')
 })
 
 await test('No circular imports in skills', async () => {
@@ -419,11 +461,13 @@ await test('File structure is complete', async () => {
 
   const requiredFiles = [
     'bin/dropship.js',
-    'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js', 'lib/license.js',
+    'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js', 'lib/license.js', 'lib/notify.js',
     'skills/scout.js', 'skills/source.js', 'skills/chat.js', 'skills/price.js', 'skills/fulfill.js', 'skills/guard.js',
     'skills/analyze.js', 'skills/segment.js', 'skills/growth.js', 'skills/support.js',
     'skills/audit.js', 'skills/intel.js', 'skills/supplier.js', 'skills/forecast.js',
-    'skills/profit.js', 'skills/email.js', 'skills/doctor.js', 'skills/autopilot.js', 'skills/self-test.js',
+    'skills/profit.js', 'skills/email.js', 'skills/doctor.js', 'skills/autopilot.js',
+    'skills/returns.js', 'skills/inventory.js', 'skills/copy.js', 'skills/reviews.js', 'skills/legal.js', 'skills/notify.js', 'skills/upsell.js',
+    'skills/self-test.js',
     'package.json', 'CLAUDE.md'
   ]
 

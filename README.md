@@ -64,6 +64,13 @@ dropship autopilot
 | `dropship profit` | Real P&L profit analysis |
 | `dropship email` | Email marketing sequences |
 | `dropship doctor` | System health check |
+| `dropship returns` | Handle returns and refunds |
+| `dropship inventory` | Inventory sync + stockout detection |
+| `dropship copy` | AI copywriting for product listings |
+| `dropship reviews` | Review analysis + reputation management |
+| `dropship legal` | Generate legal pages (privacy, terms, etc.) |
+| `dropship notify` | Setup Slack/Discord alerts |
+| `dropship upsell` | Upsell/cross-sell opportunities |
 | `dropship autopilot` | Run everything autonomously |
 | `dropship config` | View/edit configuration |
 | `dropship activate` | Activate a Pro license key |
@@ -106,6 +113,9 @@ Dropship CLI works out of the box on the **Free tier**. Pro unlocks everything.
 | Fulfillment | - | Yes |
 | Revenue guard | - | Yes |
 | Analytics + audit | - | Yes |
+| Returns + inventory | - | Yes |
+| Copywriting + reviews | - | Yes |
+| Upsell analysis | - | Yes |
 | Autopilot | - | Yes |
 
 Activate Pro: `dropship activate DSC-YOUR-KEY`
@@ -142,7 +152,7 @@ cp .env.example .env
 npm test
 ```
 
-Runs 53 self-tests covering all libs, skills, CLI commands, license system, and integration checks.
+Runs 63 self-tests covering all libs, skills, CLI commands, license system, and integration checks.
 
 ## License
 

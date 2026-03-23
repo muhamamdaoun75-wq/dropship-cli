@@ -6,7 +6,7 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 ## Build Order (follow exactly)
 
 ### Phase 1: Core Infrastructure
-1. `bin/dropship.js` — CLI entry point with Commander (22 commands)
+1. `bin/dropship.js` — CLI entry point with Commander (29 commands)
 2. `lib/config.js` — Store credentials, API keys, persistent config via `conf`
 3. `lib/ai.js` — Claude AI client with tool use, rate limiting, retry (the brain)
 4. `lib/shopify.js` — Shopify API client with retry logic
@@ -15,8 +15,9 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 7. `lib/cj.js` — CJ Dropshipping API client (token management, product search, order placement, tracking)
 8. `lib/suppliers.js` — Multi-supplier router with scoring (cost/speed/reliability)
 9. `lib/license.js` — License key validation, tier gating (free/pro), usage tracking
+10. `lib/notify.js` — Slack/Discord webhook notifications
 
-### Phase 2: Skills (18 AI Agent Commands)
+### Phase 2: Skills (25 AI Agent Commands)
 9. `skills/chat.js` — Interactive conversational mode (talk to AI about your business)
 10. `skills/scout.js` — Find trending products (market analysis + CJ catalog search)
 11. `skills/source.js` — Source product from CJ and import to Shopify (with product mapping)
@@ -35,6 +36,13 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 23. `skills/email.js` — Email marketing (post-purchase, winback, abandoned cart)
 24. `skills/doctor.js` — System health check and error diagnosis
 25. `skills/autopilot.js` — Autonomous mode (orchestrates all skills)
+26. `skills/returns.js` — Returns & refunds processing + abuse detection
+27. `skills/inventory.js` — Inventory sync, stockout detection, dead stock
+28. `skills/copy.js` — AI copywriting for product titles, descriptions, SEO
+29. `skills/reviews.js` — Review analysis, response drafting, reputation scoring
+30. `skills/legal.js` — Legal page generation (privacy, terms, refund, shipping)
+31. `skills/notify.js` — Slack/Discord notification setup and alerts
+32. `skills/upsell.js` — Upsell/cross-sell analysis, bundle recommendations
 
 ### Phase 3: Self-Test + Polish
 27. `skills/self-test.js` — Validates all skills load and run (48 tests)
@@ -81,6 +89,13 @@ dropship email             — Email marketing sequences
 dropship doctor            — System health check + error diagnosis
 dropship autopilot         — Run everything autonomously
 dropship status            — Quick business overview
+dropship returns           — Handle returns and refunds
+dropship inventory         — Inventory sync and stockout detection
+dropship copy              — AI copywriting for product listings
+dropship reviews           — Review analysis and reputation management
+dropship legal             — Generate legal pages + compliance check
+dropship notify            — Setup Slack/Discord notifications
+dropship upsell            — Upsell/cross-sell opportunities
 dropship config            — View/edit configuration
 dropship activate [key]    — Activate a Pro license key
 ```

@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node bin/dropship.js",
     "test": "node skills/self-test.js",
-    "dev": "node bin/dropship.js --dev"
+    "dev": "DEBUG=1 node bin/dropship.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

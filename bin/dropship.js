@@ -362,6 +362,96 @@ program
     await email.run()
   })
 
+// ─── returns ─────────────────────────────────────────
+program
+  .command('returns')
+  .description('Handle returns and refunds')
+  .action(async () => {
+    logger.banner()
+    requirePro('returns')
+    await ensureConnected()
+
+    const { default: returns } = await import('../skills/returns.js')
+    await returns.run()
+  })
+
+// ─── inventory ───────────────────────────────────────
+program
+  .command('inventory')
+  .description('Inventory sync and stockout detection')
+  .action(async () => {
+    logger.banner()
+    requirePro('inventory')
+    await ensureConnected()
+
+    const { default: inventory } = await import('../skills/inventory.js')
+    await inventory.run()
+  })
+
+// ─── copy ────────────────────────────────────────────
+program
+  .command('copy')
+  .description('AI copywriting for product listings')
+  .action(async () => {
+    logger.banner()
+    requirePro('copy')
+    await ensureConnected()
+
+    const { default: copy } = await import('../skills/copy.js')
+    await copy.run()
+  })
+
+// ─── reviews ─────────────────────────────────────────
+program
+  .command('reviews')
+  .description('Review analysis and reputation management')
+  .action(async () => {
+    logger.banner()
+    requirePro('reviews')
+    await ensureConnected()
+
+    const { default: reviews } = await import('../skills/reviews.js')
+    await reviews.run()
+  })
+
+// ─── legal ───────────────────────────────────────────
+program
+  .command('legal')
+  .description('Generate legal pages and compliance check')
+  .action(async () => {
+    logger.banner()
+    await ensureConnected()
+
+    const { default: legal } = await import('../skills/legal.js')
+    await legal.run()
+  })
+
+// ─── notify ──────────────────────────────────────────
+program
+  .command('notify')
+  .description('Setup Slack/Discord notifications')
+  .option('--setup', 'Configure webhook URLs')
+  .option('--test', 'Send a test notification')
+  .action(async (opts) => {
+    logger.banner()
+
+    const { default: notify } = await import('../skills/notify.js')
+    await notify.run(opts)
+  })
+
+// ─── upsell ──────────────────────────────────────────
+program
+  .command('upsell')
+  .description('Upsell and cross-sell opportunities')
+  .action(async () => {
+    logger.banner()
+    requirePro('upsell')
+    await ensureConnected()
+
+    const { default: upsell } = await import('../skills/upsell.js')
+    await upsell.run()
+  })
+
 // ─── doctor ──────────────────────────────────────────
 program
   .command('doctor')

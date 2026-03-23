@@ -137,17 +137,21 @@ const tools = [
       required: ['orderId', 'reason', 'severity']
     },
     async execute(input) {
-      const icon = input.severity === 'high' ? '🔴' : input.severity === 'medium' ? '🟡' : '🟢'
-      logger.warn(`${icon} Order #${input.orderNumber || input.orderId}: ${input.reason}`)
+      try {
+        const icon = input.severity === 'high' ? '🔴' : input.severity === 'medium' ? '🟡' : '🟢'
+        logger.warn(`${icon} Order #${input.orderNumber || input.orderId}: ${input.reason}`)
 
-      await db.logAction({
-        shop: config.getShop(),
-        type: 'FLAG',
-        message: `Flagged order #${input.orderNumber || input.orderId}: ${input.reason}`,
-        metadata: { orderId: input.orderId, severity: input.severity, reason: input.reason }
-      })
+        await db.logAction({
+          shop: config.getShop(),
+          type: 'FLAG',
+          message: `Flagged order #${input.orderNumber || input.orderId}: ${input.reason}`,
+          metadata: { orderId: input.orderId, severity: input.severity, reason: input.reason }
+        })
 
-      return { flagged: true }
+        return { flagged: true }
+      } catch (err) {
+        return { flagged: false, error: err.message }
+      }
     }
   },
   {
