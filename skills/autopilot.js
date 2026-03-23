@@ -1,6 +1,6 @@
 // Autopilot Skill — Run everything autonomously
 // AI meta-agent that decides what to run and when, orchestrating all other skills
-import { runAgent, ask } from '../lib/ai.js'
+import { runAgent } from '../lib/ai.js'
 import config from '../lib/config.js'
 import logger from '../lib/logger.js'
 import * as shopify from '../lib/shopify.js'
