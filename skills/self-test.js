@@ -162,6 +162,14 @@ await test('lib/config.js has CJ email/password methods', async () => {
   assert(typeof config.clearCJToken === 'function', 'Missing clearCJToken()')
 })
 
+await test('lib/config.js has product mapping methods', async () => {
+  const { default: config } = await import('../lib/config.js')
+  assert(typeof config.getProductMappings === 'function', 'Missing getProductMappings()')
+  assert(typeof config.setProductMapping === 'function', 'Missing setProductMapping()')
+  assert(typeof config.getProductMapping === 'function', 'Missing getProductMapping()')
+  assert(typeof config.removeProductMapping === 'function', 'Missing removeProductMapping()')
+})
+
 console.log('')
 
 // ─── Phase 2: Skills ────────────────────────────────
@@ -181,6 +189,7 @@ const skills = [
   { file: 'audit', name: 'Audit', methods: ['run'] },
   { file: 'intel', name: 'Intel', methods: ['run'] },
   { file: 'source', name: 'Source', methods: ['run'] },
+  { file: 'chat', name: 'Chat', methods: ['run'] },
   { file: 'supplier', name: 'Supplier', methods: ['run'] },
   { file: 'forecast', name: 'Forecast', methods: ['run'] },
   { file: 'profit', name: 'Profit', methods: ['run'] },
@@ -206,14 +215,14 @@ console.log('')
 console.log(chalk.bold('  Phase 3: CLI'))
 console.log('')
 
-await test('bin/dropship.js is valid JS with all 20 commands', async () => {
+await test('bin/dropship.js is valid JS with all 21 commands', async () => {
   const fs = await import('fs')
   const code = fs.readFileSync(new URL('../bin/dropship.js', import.meta.url), 'utf8')
   assert(code.includes('commander'), 'Missing commander import')
   assert(code.includes('program'), 'Missing program definition')
 
   const commands = [
-    'connect', 'scout', 'source', 'price', 'fulfill', 'guard', 'analyze',
+    'connect', 'chat', 'scout', 'source', 'price', 'fulfill', 'guard', 'analyze',
     'segment', 'growth', 'support', 'audit', 'intel', 'supplier',
     'forecast', 'profit', 'email', 'doctor', 'autopilot', 'config', 'status'
   ]
@@ -356,7 +365,7 @@ await test('File structure is complete', async () => {
   const requiredFiles = [
     'bin/dropship.js',
     'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js',
-    'skills/scout.js', 'skills/source.js', 'skills/price.js', 'skills/fulfill.js', 'skills/guard.js',
+    'skills/scout.js', 'skills/source.js', 'skills/chat.js', 'skills/price.js', 'skills/fulfill.js', 'skills/guard.js',
     'skills/analyze.js', 'skills/segment.js', 'skills/growth.js', 'skills/support.js',
     'skills/audit.js', 'skills/intel.js', 'skills/supplier.js', 'skills/forecast.js',
     'skills/profit.js', 'skills/email.js', 'skills/doctor.js', 'skills/autopilot.js', 'skills/self-test.js',

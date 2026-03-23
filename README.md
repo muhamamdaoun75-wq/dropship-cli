@@ -34,7 +34,10 @@ dropship scout
 # 4. Source a product from CJ and import to Shopify
 dropship source "LED desk lamp"
 
-# 5. Let AI run everything
+# 5. Talk to AI about your business
+dropship chat
+
+# 6. Let AI run everything
 dropship autopilot
 ```
 
@@ -43,6 +46,7 @@ dropship autopilot
 | Command | What it does |
 |---------|-------------|
 | `dropship connect` | Connect Shopify store + CJ Dropshipping |
+| `dropship chat` | Talk to AI about your business (interactive) |
 | `dropship status` | Quick business overview |
 | `dropship scout` | Find trending products to sell |
 | `dropship source <query>` | Source product from CJ, import to Shopify |
@@ -120,7 +124,7 @@ cp .env.example .env
 npm test
 ```
 
-Runs 45 self-tests covering all libs, skills, CLI commands, and integration checks.
+Runs 48 self-tests covering all libs, skills, CLI commands, and integration checks.
 
 ## License
 

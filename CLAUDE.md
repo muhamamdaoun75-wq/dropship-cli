@@ -6,7 +6,7 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 ## Build Order (follow exactly)
 
 ### Phase 1: Core Infrastructure
-1. `bin/dropship.js` — CLI entry point with Commander (20 commands)
+1. `bin/dropship.js` — CLI entry point with Commander (21 commands)
 2. `lib/config.js` — Store credentials, API keys, persistent config via `conf`
 3. `lib/ai.js` — Claude AI client with tool use, rate limiting, retry (the brain)
 4. `lib/shopify.js` — Shopify API client with retry logic
@@ -15,9 +15,10 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 7. `lib/cj.js` — CJ Dropshipping API client (token management, product search, order placement, tracking)
 8. `lib/suppliers.js` — Multi-supplier router with scoring (cost/speed/reliability)
 
-### Phase 2: Skills (17 AI Agent Commands)
-9. `skills/scout.js` — Find trending products (market analysis + CJ catalog search)
-10. `skills/source.js` — Source product from CJ and import to Shopify
+### Phase 2: Skills (18 AI Agent Commands)
+9. `skills/chat.js` — Interactive conversational mode (talk to AI about your business)
+10. `skills/scout.js` — Find trending products (market analysis + CJ catalog search)
+11. `skills/source.js` — Source product from CJ and import to Shopify (with product mapping)
 11. `skills/price.js` — Optimize prices (psychological pricing, velocity-aware)
 12. `skills/fulfill.js` — Process orders (CJ order placement, tracking, fraud detection)
 13. `skills/guard.js` — Revenue protection scan (stockouts, margins, threats)
@@ -35,7 +36,7 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 25. `skills/autopilot.js` — Autonomous mode (orchestrates all skills)
 
 ### Phase 3: Self-Test + Polish
-26. `skills/self-test.js` — Validates all skills load and run (45 tests)
+27. `skills/self-test.js` — Validates all skills load and run (48 tests)
 27. Wire everything into Commander CLI
 28. Test all commands end-to-end
 
@@ -60,6 +61,7 @@ AI-powered autonomous dropshipping operator. Like Claude Code, but instead of wr
 ## CLI Commands
 ```
 dropship connect           — Connect Shopify store + CJ Dropshipping
+dropship chat              — Talk to AI about your business (interactive)
 dropship scout             — Find trending products to sell
 dropship source <query>    — Source product from CJ and import to Shopify
 dropship price             — Optimize all product prices

@@ -135,6 +135,18 @@ program
     logger.success('Ready to go. Run `dropship status` to see your store.')
   })
 
+// ─── chat ───────────────────────────────────────────
+program
+  .command('chat')
+  .description('Talk to AI about your business (interactive)')
+  .action(async () => {
+    logger.banner()
+    await ensureConnected()
+
+    const { default: chat } = await import('../skills/chat.js')
+    await chat.run()
+  })
+
 // ─── status ─────────────────────────────────────────
 program
   .command('status')

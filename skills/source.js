@@ -134,6 +134,8 @@ const tools = [
         price: { type: 'string', description: 'Retail price' },
         compareAtPrice: { type: 'string', description: 'Compare-at price for sale appearance' },
         sku: { type: 'string', description: 'CJ variant ID (vid) for order mapping' },
+        cjProductId: { type: 'string', description: 'CJ product ID (pid) for mapping' },
+        supplierPrice: { type: 'number', description: 'Supplier cost for margin tracking' },
         imageUrl: { type: 'string', description: 'Main product image URL from CJ' },
         status: { type: 'string', enum: ['draft', 'active'], description: 'Product status (default: draft)' }
       },
@@ -164,11 +166,22 @@ const tools = [
         logger.kv('  Price', `$${input.price}`)
         logger.kv('  Status', input.status || 'draft')
 
+        // Persist CJ → Shopify product mapping for fulfillment
+        if (input.cjProductId || input.sku) {
+          config.setProductMapping(String(product.id), {
+            cjProductId: input.cjProductId || null,
+            cjVariantId: input.sku || null,
+            supplierPrice: input.supplierPrice || null,
+            title: input.title
+          })
+          logger.dim('  CJ mapping saved for auto-fulfillment')
+        }
+
         await db.logAction({
           shop: config.getShop(),
           type: 'SOURCE',
           message: `Created product: ${input.title} at $${input.price}`,
-          metadata: { productId: product.id, supplier: input.vendor, sku: input.sku }
+          metadata: { productId: product.id, supplier: input.vendor, sku: input.sku, cjProductId: input.cjProductId }
         })
 
         return { created: true, productId: product.id, title: product.title, handle: product.handle }

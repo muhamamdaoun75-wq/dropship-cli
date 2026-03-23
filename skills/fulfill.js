@@ -62,14 +62,20 @@ const tools = [
               country: o.shipping_address.country,
               zip: o.shipping_address.zip
             } : null,
-            lineItems: (o.line_items || []).map(li => ({
-              title: li.title,
-              quantity: li.quantity,
-              price: li.price,
-              sku: li.sku,
-              productId: li.product_id,
-              variantId: li.variant_id
-            })),
+            lineItems: (o.line_items || []).map(li => {
+              const mapping = config.getProductMapping(String(li.product_id))
+              return {
+                title: li.title,
+                quantity: li.quantity,
+                price: li.price,
+                sku: li.sku,
+                productId: li.product_id,
+                variantId: li.variant_id,
+                cjProductId: mapping?.cjProductId || null,
+                cjVariantId: mapping?.cjVariantId || li.sku || null,
+                hasCJMapping: !!mapping
+              }
+            }),
             riskLevel: o.order_status_url ? 'normal' : 'unknown',
             ageHours: Math.round((Date.now() - new Date(o.created_at)) / 3600000)
           }))
