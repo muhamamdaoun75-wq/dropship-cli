@@ -83,6 +83,15 @@ const tools = [
         fix: !sbKey ? 'Set SUPABASE_SERVICE_KEY in .env (optional)' : null
       })
 
+      // Shopify App OAuth
+      const hasApp = config.hasShopifyApp()
+      checks.push({
+        name: 'Shopify OAuth App',
+        status: hasApp ? 'PASS' : 'WARN',
+        value: hasApp ? 'Configured' : '(not set — using manual token)',
+        fix: !hasApp ? 'Run: dropship connect (OAuth) for one-click merchant auth' : null
+      })
+
       // CJ
       const cjKey = config.getCJApiKey()
       checks.push({

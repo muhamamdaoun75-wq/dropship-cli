@@ -267,6 +267,29 @@ await test('lib/license.js free tier allows free commands', async () => {
   assert(PRO_COMMANDS.includes('analyze'), 'analyze should be pro')
 })
 
+await test('lib/config.js has shopifyApp OAuth methods', async () => {
+  const { default: config } = await import('../lib/config.js')
+  assert(typeof config.getShopifyApiKey === 'function', 'Missing getShopifyApiKey()')
+  assert(typeof config.getShopifyApiSecret === 'function', 'Missing getShopifyApiSecret()')
+  assert(typeof config.setShopifyApp === 'function', 'Missing setShopifyApp()')
+  assert(typeof config.hasShopifyApp === 'function', 'Missing hasShopifyApp()')
+})
+
+await test('lib/config.js summary includes shopifyAppConfigured', async () => {
+  const { default: config } = await import('../lib/config.js')
+  const s = config.summary()
+  assert(typeof s.shopifyAppConfigured === 'boolean', 'Missing shopifyAppConfigured')
+})
+
+await test('lib/oauth.js loads with all exports', async () => {
+  const mod = await import('../lib/oauth.js')
+  assert(typeof mod.startOAuthFlow === 'function', 'Missing startOAuthFlow()')
+  assert(typeof mod.SCOPES === 'string', 'Missing SCOPES')
+  assert(typeof mod.DEFAULT_PORT === 'number', 'Missing DEFAULT_PORT')
+  assert(mod.SCOPES.includes('read_products'), 'SCOPES should include read_products')
+  assert(mod.DEFAULT_PORT === 3456, `DEFAULT_PORT should be 3456, got ${mod.DEFAULT_PORT}`)
+})
+
 await test('lib/config.js has product mapping methods', async () => {
   const { default: config } = await import('../lib/config.js')
   assert(typeof config.getProductMappings === 'function', 'Missing getProductMappings()')
@@ -354,6 +377,15 @@ await test('bin/dropship.js enforces free tier limits', async () => {
   assert(code.includes("enforceFreeLimit('chatTurnsPerDay'"), 'Missing chat limit enforcement')
 })
 
+await test('bin/dropship.js connect supports OAuth and --manual', async () => {
+  const fs = await import('fs')
+  const code = fs.readFileSync(new URL('../bin/dropship.js', import.meta.url), 'utf8')
+  assert(code.includes("'--manual'"), 'Missing --manual flag')
+  assert(code.includes('startOAuthFlow'), 'Missing OAuth flow integration')
+  assert(code.includes("'oauth'"), 'Missing oauth choice')
+  assert(code.includes('hasShopifyApp'), 'Missing hasShopifyApp check')
+})
+
 await test('bin/dropship.js has shebang', async () => {
   const fs = await import('fs')
   const code = fs.readFileSync(new URL('../bin/dropship.js', import.meta.url), 'utf8')
@@ -370,7 +402,7 @@ await test('bin/dropship.js is executable', async () => {
 await test('package.json bin entry correct', async () => {
   const fs = await import('fs')
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-  assert(pkg.bin?.dropship === './bin/dropship.js', 'Wrong bin entry')
+  assert(pkg.bin?.dropship === './bin/dropship.js' || pkg.bin?.dropship === 'bin/dropship.js', 'Wrong bin entry')
   assert(pkg.type === 'module', 'Missing type: module')
   assert(pkg.scripts?.test, 'Missing test script')
   assert(pkg.scripts?.start, 'Missing start script')
@@ -446,6 +478,7 @@ await test('No circular imports in core libs', async () => {
   await import('../lib/suppliers.js')
   await import('../lib/license.js')
   await import('../lib/notify.js')
+  await import('../lib/oauth.js')
 })
 
 await test('No circular imports in skills', async () => {
@@ -517,7 +550,7 @@ await test('File structure is complete', async () => {
 
   const requiredFiles = [
     'bin/dropship.js',
-    'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js', 'lib/license.js', 'lib/notify.js',
+    'lib/ai.js', 'lib/config.js', 'lib/db.js', 'lib/logger.js', 'lib/shopify.js', 'lib/cj.js', 'lib/suppliers.js', 'lib/license.js', 'lib/notify.js', 'lib/oauth.js',
     'skills/scout.js', 'skills/source.js', 'skills/chat.js', 'skills/price.js', 'skills/fulfill.js', 'skills/guard.js',
     'skills/analyze.js', 'skills/segment.js', 'skills/growth.js', 'skills/support.js',
     'skills/audit.js', 'skills/intel.js', 'skills/supplier.js', 'skills/forecast.js',

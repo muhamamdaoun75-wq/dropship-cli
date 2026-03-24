@@ -27,7 +27,7 @@ const program = new Command()
 program
   .name('dropship')
   .description('AI-powered autonomous dropshipping operator')
-  .version('1.0.1')
+  .version('1.1.0')
   .addHelpText('before', `
   ⚡ DROPSHIP CLI — Claude Code for Dropshipping
   ───────────────────────────────────────────────
@@ -45,28 +45,95 @@ program
 program
   .command('connect')
   .description('Connect your Shopify store')
-  .action(async () => {
+  .option('--manual', 'Skip OAuth and enter access token manually')
+  .action(async (opts) => {
     logger.banner()
     logger.header('Connect Shopify Store')
 
-    const answers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'shop',
-        message: 'Shopify store domain (e.g. mystore.myshopify.com):',
-        validate: v => /^[a-z0-9-]+\.myshopify\.com$/i.test(v.trim()) || 'Must be like yourstore.myshopify.com'
-      },
-      {
+    // Step 1: Get shop domain
+    const { shop } = await inquirer.prompt([{
+      type: 'input',
+      name: 'shop',
+      message: 'Shopify store domain (e.g. mystore.myshopify.com):',
+      validate: v => /^[a-z0-9-]+\.myshopify\.com$/i.test(v.trim()) || 'Must be like yourstore.myshopify.com'
+    }])
+
+    // Step 2: Choose connection method
+    let connected = false
+    if (!opts.manual) {
+      const { method } = await inquirer.prompt([{
+        type: 'list',
+        name: 'method',
+        message: 'How do you want to connect?',
+        choices: [
+          { name: 'OAuth — Open browser to authorize (recommended)', value: 'oauth' },
+          { name: 'Manual — Paste Admin API access token', value: 'manual' }
+        ]
+      }])
+
+      if (method === 'oauth') {
+        // Ensure Shopify app credentials exist
+        if (!config.hasShopifyApp()) {
+          logger.blank()
+          logger.info('First-time OAuth setup — enter your Shopify app credentials.')
+          logger.dim('Create an app at https://partners.shopify.com → Apps → Create app')
+          logger.dim('Set redirect URL to: http://127.0.0.1:3456/callback')
+          logger.blank()
+
+          const appCreds = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'apiKey',
+              message: 'Shopify App API Key (Client ID):',
+              validate: v => v.length > 10 || 'API key too short'
+            },
+            {
+              type: 'password',
+              name: 'apiSecret',
+              message: 'Shopify App API Secret:',
+              validate: v => v.length > 10 || 'API secret too short'
+            }
+          ])
+          config.setShopifyApp(appCreds)
+          logger.success('App credentials saved (one-time setup)')
+        }
+
+        // Run OAuth flow
+        logger.blank()
+        logger.info('Opening browser for authorization...')
+        logger.dim('If the browser does not open, copy the URL from the terminal.')
+        logger.blank()
+
+        try {
+          const { startOAuthFlow } = await import('../lib/oauth.js')
+          const result = await startOAuthFlow(shop, {
+            apiKey: config.getShopifyApiKey(),
+            apiSecret: config.getShopifyApiSecret()
+          })
+          config.setShopify({ shop: result.shop, accessToken: result.accessToken })
+          connected = true
+          logger.success(`Authorized via OAuth!`)
+        } catch (err) {
+          logger.error(`OAuth failed: ${err.message}`)
+          logger.info('Falling back to manual token entry...')
+          logger.blank()
+        }
+      }
+    }
+
+    // Manual token entry (fallback or explicit --manual)
+    if (!connected) {
+      const { accessToken } = await inquirer.prompt([{
         type: 'password',
         name: 'accessToken',
         message: 'Admin API access token:',
         validate: v => (v.startsWith('shpat_') && v.length > 10) || 'Token must start with shpat_'
-      }
-    ])
+      }])
+      config.setShopify({ shop, accessToken })
+    }
 
-    config.setShopify(answers)
+    // Test connection
     logger.spin('Testing connection...')
-
     const { testConnection } = await import('../lib/shopify.js')
     const result = await testConnection()
 
@@ -123,11 +190,11 @@ program
         logger.spin('Testing CJ connection...')
         try {
           const cj = await import('../lib/cj.js')
-          const result = await cj.testCJConnection()
-          if (result.connected) {
+          const cjResult = await cj.testCJConnection()
+          if (cjResult.connected) {
             logger.stopSpin('CJ Dropshipping connected!')
           } else {
-            logger.stopSpin(`CJ issue: ${result.message}`, false)
+            logger.stopSpin(`CJ issue: ${cjResult.message}`, false)
           }
         } catch (err) {
           logger.stopSpin(`CJ connection failed: ${err.message}`, false)
